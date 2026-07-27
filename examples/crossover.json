@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "title": "Signal War Reading Order",
+  "sections": [
+    {
+      "title": "Opening",
+      "entries": [
+        {"series": "North Signal", "start": 4, "end": 6},
+        {"series": "Relay Team", "issue": "Annual 1", "note": "Read after North Signal #6"}
+      ]
+    }
+  ]
+}
