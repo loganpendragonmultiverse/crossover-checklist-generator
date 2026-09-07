@@ -5,6 +5,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from .interactive import enrich
+
 STATUSES = {"pending", "read", "skipped"}
 
 
@@ -30,7 +32,9 @@ def load_order(path: Path) -> dict[str, Any]:
             ranged = "start" in entry or "end" in entry
             if single == ranged:
                 raise ValueError("each entry must define either issue or start/end")
-            if single and not isinstance(entry["issue"], (str, int)):
+            if single and (
+                not isinstance(entry["issue"], (str, int)) or isinstance(entry["issue"], bool)
+            ):
                 raise TypeError("single issue must be text or integer")
             if ranged and (
                 not isinstance(entry.get("start"), int)
@@ -46,7 +50,7 @@ def load_order(path: Path) -> dict[str, Any]:
     return data
 
 
-def expand(data: dict[str, Any]) -> dict[str, Any]:
+def expand(data: dict[str, Any], choices: dict[str, str] | None = None) -> dict[str, Any]:
     issues: list[dict[str, Any]] = []
     seen: set[str] = set()
     for section_index, section in enumerate(data["sections"], 1):
@@ -64,6 +68,10 @@ def expand(data: dict[str, Any]) -> dict[str, Any]:
                 issues.append(
                     {
                         "position": len(issues) + 1,
+                        "id": identity,
+                        "prerequisites": entry.get("prerequisites", []),
+                        "branch_group": entry.get("branch_group"),
+                        "branch": entry.get("branch"),
                         "section": section["title"],
                         "section_index": section_index,
                         "series": entry["series"],
@@ -72,6 +80,10 @@ def expand(data: dict[str, Any]) -> dict[str, Any]:
                         "note": entry.get("note"),
                     }
                 )
+    selected = choices if choices is not None else data.get("branch_choices", {})
+    if not isinstance(selected, dict) or any(not isinstance(v, str) for v in selected.values()):
+        raise TypeError("branch_choices must map groups to option names")
+    warnings = enrich(issues, selected)
     counts = Counter(issue["status"] for issue in issues)
     return {
         "version": 1,
@@ -79,6 +91,8 @@ def expand(data: dict[str, Any]) -> dict[str, Any]:
         "issue_count": len(issues),
         "counts": dict(sorted(counts.items())),
         "issues": issues,
+        "branch_choices": selected,
+        "warnings": warnings,
     }
 
 
