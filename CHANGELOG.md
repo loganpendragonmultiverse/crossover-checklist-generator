@@ -1,6 +1,10 @@
 # Changelog
 
-## 1.2.0 - Unreleased
+## 1.2.1
+
+- Correct release wording and the original publication date; update installation references. Feature behavior is unchanged.
+
+## 1.2.0 - 2026-10-15
 
 - Carry progress and private notes into revised authored orders by existing issue identities.
 
