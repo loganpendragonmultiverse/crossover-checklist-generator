@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.0 - Unreleased
+
+- Carry progress and private notes into revised authored orders by existing issue identities.
+
 ## 1.1.0 - 2026-09-07
 
 - Add an editable local reading checklist with per-issue progress, round-trip export, authored prerequisites and alternative branches.
