@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -108,4 +109,50 @@ def render_markdown(report: dict[str, Any]) -> str:
         lines.append(line)
         if issue.get("note"):
             lines.append(f"   - {issue['note']}")
+    if "progress_migration" in report:
+        lines.extend(["", "## Progress transfer", ""])
+        for key, values in report["progress_migration"].items():
+            lines.append(f"- {key}: {', '.join(values) or 'none'}")
     return "\n".join(lines).rstrip() + "\n"
+
+
+def carry_progress(previous: dict[str, Any], revised: dict[str, Any]) -> dict[str, Any]:
+    """Carry only status and notes by existing exact normalized issue identities."""
+    old_report = expand(previous)
+    new_report = expand(revised)
+    old = {item["id"]: item for item in old_report["issues"]}
+    new_ids = {item["id"] for item in new_report["issues"]}
+    result = deepcopy(revised)
+    result["sections"] = []
+    for section_index, section in enumerate(revised["sections"], 1):
+        entries = []
+        for item in new_report["issues"]:
+            if item["section_index"] != section_index:
+                continue
+            entry = {
+                key: item[key]
+                for key in (
+                    "series",
+                    "issue",
+                    "status",
+                    "note",
+                    "prerequisites",
+                    "branch_group",
+                    "branch",
+                )
+                if item[key] is not None
+            }
+            if item["id"] in old:
+                entry["status"] = old[item["id"]]["status"]
+                if old[item["id"]]["note"] is None:
+                    entry.pop("note", None)
+                else:
+                    entry["note"] = old[item["id"]]["note"]
+            entries.append(entry)
+        result["sections"].append({**section, "entries": entries})
+    result["progress_migration"] = {
+        "matched": [item["id"] for item in new_report["issues"] if item["id"] in old],
+        "added": [item["id"] for item in new_report["issues"] if item["id"] not in old],
+        "removed": [item["id"] for item in old_report["issues"] if item["id"] not in new_ids],
+    }
+    return result
