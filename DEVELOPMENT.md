@@ -11,7 +11,7 @@ The HTML checklist edits pending/read/skipped progress and private notes, then d
 Local formatting, lint, strict types and regression tests pass. Public release completion requires the protected CI/CodeQL matrix, tagged artifacts and matching Forge catalog/detail deployment.
 
 
-## 1.2.0 candidate
+## Version 1.2.0
 
 Carry saved progress into a revised authored order with:
 
