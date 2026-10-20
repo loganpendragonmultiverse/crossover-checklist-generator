@@ -22,6 +22,6 @@ crossover-checklist carried.json --format html --output checklist.html
 
 Both inputs are version 1 authored checklist JSON, including downloads from the existing HTML editor. Only status and private notes transfer, using the existing normalized `series::issue` identity. Ranges expand to single entries so individual progress can survive revised ranges. New section order, prerequisites, branch definitions and branch choices remain authoritative. No title, issue renumbering or branch equivalence is guessed. Duplicate identities or invalid graphs fail through the existing validators. The additive `progress_migration` summary lists matched, added and removed IDs in author order; unmatched new entries retain their revised status/notes. JSON and Markdown reports include that summary. `--format input` saves reusable authored JSON; normal JSON remains a report.
 
-## Version 1.2.2
+## Version 1.2.3
 
 Reject blank issue identities, malformed statuses/branches and boolean format versions. Bound expansion to 10,000 issues before allocating ranges and validate long prerequisite chains without recursion. Markdown now exposes excluded issues and prerequisite warnings. Create output files exclusively, including refusing dangling symbolic links.

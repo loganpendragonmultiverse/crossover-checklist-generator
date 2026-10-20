@@ -1,6 +1,10 @@
 # Changelog
 
-## 1.2.2 - 2026-10-20
+## 1.2.3 - 2026-10-20
+
+- Include development and testing instructions in source distributions. The preceding 1.2.2 tag was held before public release when distribution acceptance found these missing files.
+
+## 1.2.2 - 2026-10-20 (unpublished tag)
 
 - Reject blank issue identities, malformed statuses/branches and boolean format versions. Bound expansion to 10,000 issues before allocating ranges and validate long prerequisite chains without recursion. Markdown now exposes excluded issues and prerequisite warnings. Create output files exclusively, including refusing dangling symbolic links.
 
