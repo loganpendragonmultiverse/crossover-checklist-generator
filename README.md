@@ -47,3 +47,5 @@ Reject blank issue identities, malformed statuses/branches and boolean format ve
 Markdown treats supplied text as literal, single-line content so notes cannot introduce HTML or forged checklist headings. JSON retains the original text.
 
 The 10,000-issue ceiling counts all expanded branches, including excluded branches. Split larger authored orders into separate inputs. Total progress counts retain all authored issues; the HTML progress bar counts the explicit selection.
+
+Existing output symbolic links are refused explicitly on Windows as well as POSIX. Output directories should remain under your control while a command runs.
