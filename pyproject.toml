@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "crossover-checklist-generator"
-version = "1.2.2"
+version = "1.2.3"
 description = "Expand explicit comic issue ranges into ordered, duplicate-checked crossover reading checklists."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -35,3 +35,7 @@ omit = ["src/*/__main__.py"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--cov=crossover_checklist_generator --cov-branch --cov-report=term-missing --cov-fail-under=90"
+
+[tool.setuptools.data-files]
+"share/crossover-checklist-generator" = ["README.md", "DEVELOPMENT.md", "TESTING.md", "CHANGELOG.md", "LICENSE"]
+"share/crossover-checklist-generator/examples" = ["examples/crossover.json"]
