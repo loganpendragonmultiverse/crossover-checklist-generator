@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import html
 import json
+import re
 from collections import Counter
 from copy import deepcopy
 from pathlib import Path
@@ -8,12 +10,18 @@ from typing import Any
 
 from .interactive import enrich
 
+MAX_ISSUES = 10000
 STATUSES = {"pending", "read", "skipped"}
 
 
 def load_order(path: Path) -> dict[str, Any]:
-    data = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(data, dict) or data.get("version") != 1:
+    data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    validate_order(data)
+    return data
+
+
+def validate_order(data: dict[str, Any]) -> None:
+    if not isinstance(data, dict) or (type(data.get("version")) is not int or data["version"] != 1):
         raise ValueError("reading order must be a version 1 object")
     if not isinstance(data.get("title"), str) or not data["title"].strip():
         raise ValueError("reading order requires a title")
@@ -21,13 +29,21 @@ def load_order(path: Path) -> dict[str, Any]:
     if not isinstance(sections, list) or not sections:
         raise TypeError("sections must be a non-empty list")
     for section in sections:
-        if not isinstance(section, dict) or not isinstance(section.get("title"), str):
+        if (
+            not isinstance(section, dict)
+            or not isinstance(section.get("title"), str)
+            or not section["title"].strip()
+        ):
             raise TypeError("each section requires a title")
         entries = section.get("entries")
         if not isinstance(entries, list) or not entries:
             raise TypeError(f"section {section['title']} requires entries")
         for entry in entries:
-            if not isinstance(entry, dict) or not isinstance(entry.get("series"), str):
+            if (
+                not isinstance(entry, dict)
+                or not isinstance(entry.get("series"), str)
+                or not entry["series"].strip()
+            ):
                 raise TypeError("each entry requires a series")
             single = "issue" in entry
             ranged = "start" in entry or "end" in entry
@@ -37,6 +53,8 @@ def load_order(path: Path) -> dict[str, Any]:
                 not isinstance(entry["issue"], (str, int)) or isinstance(entry["issue"], bool)
             ):
                 raise TypeError("single issue must be text or integer")
+            if single and not str(entry["issue"]).strip():
+                raise ValueError("single issue must not be blank")
             if ranged and (
                 not isinstance(entry.get("start"), int)
                 or isinstance(entry.get("start"), bool)
@@ -44,14 +62,24 @@ def load_order(path: Path) -> dict[str, Any]:
                 or isinstance(entry.get("end"), bool)
             ):
                 raise TypeError("range start and end must be integers")
-            if entry.get("status", "pending") not in STATUSES:
+            if (
+                not isinstance(entry.get("status", "pending"), str)
+                or entry.get("status", "pending") not in STATUSES
+            ):
                 raise ValueError("entry has an invalid status")
             if "note" in entry and not isinstance(entry["note"], str):
                 raise TypeError("entry note must be text")
-    return data
 
 
 def expand(data: dict[str, Any], choices: dict[str, str] | None = None) -> dict[str, Any]:
+    validate_order(data)
+    total = sum(
+        1 if "issue" in entry else abs(entry["end"] - entry["start"]) + 1
+        for section in data["sections"]
+        for entry in section["entries"]
+    )
+    if total > MAX_ISSUES:
+        raise ValueError(f"reading order exceeds the {MAX_ISSUES} issue limit")
     issues: list[dict[str, Any]] = []
     seen: set[str] = set()
     for section_index, section in enumerate(data["sections"], 1):
@@ -97,22 +125,33 @@ def expand(data: dict[str, Any], choices: dict[str, str] | None = None) -> dict[
     }
 
 
+def _literal(value: object) -> str:
+    """Render authored text on one Markdown line without introducing markup."""
+    text = " ".join(str(value).splitlines())
+    return re.sub(r"([\\`*_{}\[\]()#+.!|>~-])", r"\\\1", html.escape(text, quote=False))
+
+
 def render_markdown(report: dict[str, Any]) -> str:
-    lines = [f"# {report['title']}", "", f"Issues: **{report['issue_count']}**", ""]
+    lines = [f"# {_literal(report['title'])}", "", f"Issues: **{report['issue_count']}**", ""]
     current = None
     for issue in report["issues"]:
         if issue["section"] != current:
             current = issue["section"]
-            lines.extend([f"## {current}", ""])
+            lines.extend([f"## {_literal(current)}", ""])
         marker = "x" if issue["status"] == "read" else " "
-        line = f"{issue['position']}. [{marker}] **{issue['series']} #{issue['issue']}** — {issue['status']}"
+        line = f"{issue['position']}. [{marker}] **{_literal(issue['series'])} #{_literal(issue['issue'])}** — {issue['status']}"
+        if not issue["selected"]:
+            line += " (excluded by selected branch)"
         lines.append(line)
         if issue.get("note"):
-            lines.append(f"   - {issue['note']}")
+            lines.append(f"   - {_literal(issue['note'])}")
+    if report["warnings"]:
+        lines.extend(["", "## Author-order warnings", ""])
+        lines.extend(f"- {_literal(warning)}" for warning in report["warnings"])
     if "progress_migration" in report:
         lines.extend(["", "## Progress transfer", ""])
         for key, values in report["progress_migration"].items():
-            lines.append(f"- {key}: {', '.join(values) or 'none'}")
+            lines.append(f"- {key}: {_literal(', '.join(values) or 'none')}")
     return "\n".join(lines).rstrip() + "\n"
 
 

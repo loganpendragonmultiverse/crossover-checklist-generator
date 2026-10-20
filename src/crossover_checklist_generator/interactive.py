@@ -11,8 +11,11 @@ def enrich(issues: list[dict[str, Any]], choices: dict[str, str]) -> list[str]:
     options: dict[str, set[str]] = {}
     for item in issues:
         group, branch = item.get("branch_group"), item.get("branch")
-        if bool(group) != bool(branch) or (
-            group and (not isinstance(group, str) or not isinstance(branch, str))
+        if (group is not None or branch is not None) and (
+            not isinstance(group, str)
+            or not group.strip()
+            or not isinstance(branch, str)
+            or not branch.strip()
         ):
             raise ValueError("branch_group and branch must both be non-empty text")
         if group:
@@ -26,22 +29,25 @@ def enrich(issues: list[dict[str, Any]], choices: dict[str, str]) -> list[str]:
     for group, selected in choices.items():
         if selected not in options.get(group, set()):
             raise ValueError(f"Unknown branch choice {group}={selected}")
-    visiting: set[str] = set()
     visited: set[str] = set()
-
-    def visit(identifier: str) -> None:
-        if identifier in visiting:
-            raise ValueError(f"Prerequisite cycle at {identifier}")
-        if identifier in visited:
-            return
-        visiting.add(identifier)
-        for prerequisite in by_id[identifier]["prerequisites"]:
-            visit(prerequisite)
-        visiting.remove(identifier)
-        visited.add(identifier)
+    for root in by_id:
+        active: set[str] = set()
+        stack = [(root, False)]
+        while stack:
+            identifier, exiting = stack.pop()
+            if exiting:
+                active.remove(identifier)
+                visited.add(identifier)
+                continue
+            if identifier in active:
+                raise ValueError(f"Prerequisite cycle at {identifier}")
+            if identifier in visited:
+                continue
+            active.add(identifier)
+            stack.append((identifier, True))
+            stack.extend((parent, False) for parent in reversed(by_id[identifier]["prerequisites"]))
 
     for item in issues:
-        visit(item["id"])
         item["selected"] = (
             not item.get("branch_group")
             or item["branch_group"] not in choices
