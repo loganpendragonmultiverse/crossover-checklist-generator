@@ -49,3 +49,5 @@ Markdown treats supplied text as literal, single-line content so notes cannot in
 The 10,000-issue ceiling counts all expanded branches, including excluded branches. Split larger authored orders into separate inputs. Total progress counts retain all authored issues; the HTML progress bar counts the explicit selection.
 
 Existing output symbolic links are refused explicitly on Windows as well as POSIX. Output directories should remain under your control while a command runs.
+
+Wheels install README, development, testing and changelog guides at `share/crossover-checklist-generator/` under the Python environment, with editable examples in its `examples/` subdirectory. Both release distributions must contain these exact tagged files.

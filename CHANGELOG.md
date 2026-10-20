@@ -2,7 +2,7 @@
 
 ## 1.2.3 - 2026-10-20
 
-- Include development and testing instructions in source distributions. The preceding 1.2.2 tag was held before public release when distribution acceptance found these missing files.
+- Package the four guides and examples with the installed wheel and source distribution. The preceding tag was held before public release when exact distribution acceptance found missing installed guides/examples.
 
 ## 1.2.2 - 2026-10-20 (unpublished tag)
 
