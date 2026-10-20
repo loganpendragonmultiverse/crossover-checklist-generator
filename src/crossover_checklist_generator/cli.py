@@ -47,12 +47,11 @@ def main(argv: list[str] | None = None) -> int:
         if args.format == "html":
             rendered = render_html(report)
         if args.output:
-            if args.output.exists():
-                raise ValueError(f"output already exists: {args.output}")
-            args.output.write_text(rendered, encoding="utf-8")
+            with args.output.open("x", encoding="utf-8") as output:
+                output.write(rendered)
         else:
             sys.stdout.write(rendered)
-    except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+    except (OSError, UnicodeError, TypeError, ValueError, json.JSONDecodeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     return 0

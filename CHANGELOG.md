@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.2 - 2026-10-20
+
+- Reject blank issue identities, malformed statuses/branches and boolean format versions. Bound expansion to 10,000 issues before allocating ranges and validate long prerequisite chains without recursion. Markdown now exposes excluded issues and prerequisite warnings. Create output files exclusively, including refusing dangling symbolic links.
+
+- Markdown treats supplied text as literal, single-line content so notes cannot introduce HTML or forged checklist headings. JSON retains the original text.
+
 ## 1.2.1 - 2026-10-16
 
 - Correct release wording and the original publication date; update installation references. Feature behavior is unchanged.
